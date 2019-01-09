@@ -83,16 +83,16 @@ def txt2list(txtfile):
 
 
 # voc2007xmls = 'anns'
-voc2007xmls = '/data2/chenjia/data/VOCdevkit/VOC2012/Annotations'
+voc2007xmls = '/data2/chenjia/data/VOCdevkit/VOC2007/Annotations'
 # test_txt = 'voc2007/test.txt'
-test_txt = '/data2/chenjia/data/VOCdevkit/VOC2012/ImageSets/Main/trainval.txt'
+test_txt = '/data2/chenjia/data/VOCdevkit/VOC2007/ImageSets/Main/test.txt'
 xml_names = txt2list(test_txt)
 xmls = []
 bboxes = []
 ann_js = {}
 for ind, xml_name in enumerate(xml_names):
     xmls.append(os.path.join(voc2007xmls, xml_name + '.xml'))
-json_name = 'annotations/instances_voc2012trainval.json'
+json_name = 'annotations/instances_voc2007val.json'
 images = []
 for i_index, xml_file in enumerate(xmls):
     image, sig_xml_bbox = getimages(xml_file, i_index)
@@ -108,6 +108,7 @@ for box_ind, box in enumerate(bboxes):
     anno['bbox'] = box[:-3]
     anno['id'] = box_ind
     anno['area'] = box[-1]
+    anno['iscrowd'] = 0
     annotations.append(anno)
 ann_js['annotations'] = annotations
 json.dump(ann_js, open(json_name, 'w'), indent=4)  # indent=4 更加美观显示

@@ -16,7 +16,7 @@ for iind, cat in enumerate(voc_clses):
     cate = {}
     cate['supercategory'] = cat
     cate['name'] = cat
-    cate['id'] = iind + 1
+    cate['id'] = iind
     categories.append(cate)
 
 def getimages(xmlname, id):
@@ -33,16 +33,15 @@ def getimages(xmlname, id):
             for j in i:
                 if j.tag == 'width':
                     width = j.text
-                    images['width'] = int(width)
+                    images['width'] = width
                 if j.tag == 'height':
                     height = j.text
-                    images['height'] = int(height)
+                    images['height'] = height
         if i.tag == 'object':
-            cat_id = 0
             for j in i:
                 if j.tag == 'name':
                     cls_name = j.text
-                    cat_id = voc_clses.index(cls_name) + 1
+                cat_id = voc_clses.index(cls_name) + 1
                 if j.tag == 'bndbox':
                     bbox = []
                     xmin = 0
@@ -64,6 +63,9 @@ def getimages(xmlname, id):
                     bbox.append(ymax - ymin)
                     bbox.append(id)   # 保存当前box对应的image_id
                     bbox.append(cat_id)
+                    # anno area
+                    bbox.append((xmax - xmin) * (ymax - ymin) - 10.0)   # bbox的ares
+                    # coco中的ares数值是 < w*h 的, 因为它其实是按segmentation的面积算的,所以我-10.0一下...
                     sig_xml_box.append(bbox)
                     # print('bbox', xmin, ymin, xmax - xmin, ymax - ymin, 'id', id, 'cls_id', cat_id)
     images['id'] = id
@@ -81,16 +83,16 @@ def txt2list(txtfile):
 
 
 # voc2007xmls = 'anns'
-voc2007xmls = '/data2/chenjia/data/VOCdevkit/VOC2007/Annotations'
+voc2007xmls = '/data2/chenjia/data/VOCdevkit/VOC2012/Annotations'
 # test_txt = 'voc2007/test.txt'
-test_txt = '/data2/chenjia/data/VOCdevkit/VOC2007/ImageSets/Main/test.txt'
+test_txt = '/data2/chenjia/data/VOCdevkit/VOC2012/ImageSets/Main/trainval.txt'
 xml_names = txt2list(test_txt)
 xmls = []
 bboxes = []
 ann_js = {}
 for ind, xml_name in enumerate(xml_names):
     xmls.append(os.path.join(voc2007xmls, xml_name + '.xml'))
-json_name = 'instances_voc2007val.json'
+json_name = 'annotations/instances_voc2012trainval.json'
 images = []
 for i_index, xml_file in enumerate(xmls):
     image, sig_xml_bbox = getimages(xml_file, i_index)
@@ -101,11 +103,11 @@ ann_js['categories'] = categories
 annotations = []
 for box_ind, box in enumerate(bboxes):
     anno = {}
-    anno['image_id'] = box[-2]
-    anno['category_id'] = box[-1]
-    anno['bbox'] = box[:-2]
-    anno['id'] = box_ind + 1
-    anno['iscrowd'] = 0
+    anno['image_id'] =  box[-3]
+    anno['category_id'] = box[-2]
+    anno['bbox'] = box[:-3]
+    anno['id'] = box_ind
+    anno['area'] = box[-1]
     annotations.append(anno)
 ann_js['annotations'] = annotations
 json.dump(ann_js, open(json_name, 'w'), indent=4)  # indent=4 更加美观显示
